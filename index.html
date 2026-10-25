@@ -29,7 +29,7 @@ input,textarea,select{outline:none}
 button{touch-action:manipulation}
 [v-cloak]{display:none!important}
 .cute-btn{transition:.16s}.cute-btn:active{transform:scale(.96)}
-.readonly .edit-only{display:none!important}.readonly button:not(.nav-allow){pointer-events:none;opacity:.55}.readonly nav button,.readonly .date-nav button{pointer-events:auto;opacity:1}.readonly .modal-bg{display:none!important}
+.readonly .edit-only{display:none!important}.readonly button:not(.nav-allow){pointer-events:none;opacity:.55}.readonly nav button,.readonly .date-nav button,.readonly button.nav-allow{pointer-events:auto;opacity:1}.readonly .modal-bg{display:none!important}
 </style>
 <script>window.addEventListener('error',function(e){var el=document.getElementById('trip-error');if(el){el.style.display='block';el.textContent='網站程式載入失敗：'+(e.message||'請重新整理頁面');}});</script>
 </head>
@@ -70,7 +70,7 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 </section>
 
 <main class="max-w-lg mx-auto px-4 bottom-safe">
-<section v-if="tab==='cloud'" class="pt-5"><h2 class="text-xl font-extrabold mb-2">☁️ 雲端同步與分享</h2><p class="text-sm mb-4">只有你登入的管理帳號可以上傳資料；朋友透過唯讀網址查看公開行程。</p><div class="card paper p-4 mb-4" v-if="!isViewer"><label class="text-xs">Firebase 網頁設定（JSON）<textarea v-model="firebaseInput" rows="8" class="field" placeholder='貼上 Firebase 專案設定，例如 {"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea></label><button @click="connectFirebase" class="save">連接 Firebase</button><div class="text-xs mt-3 break-all">狀態：{{cloudStatus}}</div><div v-if="ownerUid" class="text-xs break-all mt-2">目前登入 UID：{{ownerUid}}</div><button @click="signInGoogle" class="save" v-if="firebaseReady&&!ownerUid">使用 Google 登入管理員</button><button @click="publishCloud" class="save" v-if="firebaseReady&&ownerUid">☁️ 上傳目前行程至雲端</button><button @click="loadCloud" class="save" v-if="firebaseReady">從雲端載入行程</button></div><div class="card paper p-4 mb-4"><div class="font-bold mb-2">🔗 分享網址（唯讀）</div><p class="text-xs mb-2">請先將網站部署至 GitHub Pages，並完成 Firebase 設定，再複製以下網址。</p><div class="text-xs break-all bg-[#fff6df] p-3 rounded-xl">{{shareUrl}}</div><button @click="copyShare" class="save">複製分享網址</button></div><div class="card paper p-4 text-xs leading-6"><div class="font-bold mb-2">🔒 安全設定提醒</div>請先在 Firebase Authentication 啟用 Google 登入，並於 Firestore 設定安全規則：所有人只能讀取公開文件，只有你的 Google UID 能寫入。設定方式請看隨附說明。未完成規則前，雲端儲存可能被拒絕。</div></section>
+<section v-if="tab==='cloud'" class="pt-5"><h2 class="text-xl font-extrabold mb-2">☁️ 雲端同步與分享</h2><p class="text-sm mb-4">只有你登入的管理帳號可以上傳資料；朋友透過唯讀網址查看公開行程。</p><div class="card paper p-4 mb-4" v-if="!isViewer"><label class="text-xs">Firebase 網頁設定（JSON）<textarea v-model="firebaseInput" rows="8" class="field" placeholder='貼上 Firebase 專案設定，例如 {"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea></label><button @click="connectFirebase" class="save">連接 Firebase</button><div class="text-xs mt-3 break-all">狀態：{{cloudStatus}}</div><div v-if="ownerUid" class="text-xs break-all mt-2">目前登入 UID：{{ownerUid}}</div><button @click="signInGoogle" class="save" v-if="firebaseReady&&!ownerUid">使用 Google 登入管理員</button><button @click="publishCloud" class="save" v-if="firebaseReady&&ownerUid">☁️ 上傳目前行程至雲端</button><button @click="loadCloud" class="save" v-if="firebaseReady">從雲端載入行程</button></div><div class="card paper p-4 mb-4"><div class="font-bold mb-2">🔗 分享網址（唯讀）</div><p class="text-xs mb-2">請先將網站部署至 GitHub Pages，並完成 Firebase 設定，再複製以下網址。</p><div class="text-xs break-all bg-[#fff6df] p-3 rounded-xl">{{shareUrl}}</div><button @click="copyShare" class="save nav-allow">複製分享網址</button></div><div v-if="isViewer" class="card paper p-4 mb-4 text-xs">☁️ {{cloudStatus}}</div><div class="card paper p-4 text-xs leading-6"><div class="font-bold mb-2">🔒 安全設定提醒</div>請先在 Firebase Authentication 啟用 Google 登入，並於 Firestore 設定安全規則：所有人只能讀取公開文件，只有你的 Google UID 能寫入。設定方式請看隨附說明。未完成規則前，雲端儲存可能被拒絕。</div></section>
 
 <!-- HOME -->
 <section v-if="tab==='home'" class="pt-4">
@@ -271,6 +271,8 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 if(!window.Vue){document.getElementById('trip-error').style.display='block';document.getElementById('trip-error').textContent='Vue 程式未能載入，請檢查網路後重新整理。';throw new Error('Vue missing')}
 const {createApp}=Vue;
 const KEY='fukuokaTripFullV2';
+const PUBLIC_FIREBASE_CONFIG={"apiKey":"AIzaSyBQpkFUVcvDe99ttJq9KFP6QJAFkur7WQM","authDomain":"fukuokatrip62.firebaseapp.com","projectId":"fukuokatrip62","storageBucket":"fukuokatrip62.firebasestorage.app","messagingSenderId":"456091606239","appId":"1:456091606239:web:35f99343e92a4b98ec5d6a"};
+const ADMIN_UID='31VyskCuKCOChVkzY0AlwVTr3pd2';
 const defaultTrip={title:'福岡小旅行',subtitle:'福岡・由布院的慢旅行 🌼',startDate:new Date().toISOString().slice(0,10),days:7};
 const defaultState={
 trip:defaultTrip,
@@ -296,31 +298,35 @@ data(){
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
 const state={...defaultState,...saved};
 state.trip={...defaultTrip,...(saved.trip||{})};
-return{...state,tabs:[{id:'home',name:'行程',icon:'📅'},{id:'transport',name:'交通',icon:'🚃'},{id:'flight',name:'機票',icon:'✈️'},{id:'hotel',name:'住宿',icon:'🏨'},{id:'spots',name:'景點',icon:'⭐'},{id:'cloud',name:'分享',icon:'🔗'}],firebaseInput:(new URLSearchParams(location.search).get('fb')||localStorage.getItem('fukuokaFirebaseConfig')||''),firebaseReady:false,ownerUid:'',cloudStatus:'尚未連線',isViewer:new URLSearchParams(location.search).get('view')==='1',tab:'home',selectedDate:'',weather:{temperature:'--',max:'--',min:'--',code:0},modal:null,editingId:null,flightLeg:'out',form:{},heroImage:'./kinrinko.webp'};
+return{...state,tabs:[{id:'home',name:'行程',icon:'📅'},{id:'transport',name:'交通',icon:'🚃'},{id:'flight',name:'機票',icon:'✈️'},{id:'hotel',name:'住宿',icon:'🏨'},{id:'spots',name:'景點',icon:'⭐'},{id:'cloud',name:'分享',icon:'🔗'}],firebaseInput:JSON.stringify(PUBLIC_FIREBASE_CONFIG),firebaseReady:false,ownerUid:'',cloudStatus:'尚未連線',cloudUnsubscribe:null,autoSyncTimer:null,isApplyingCloud:false,isViewer:new URLSearchParams(location.search).get('view')==='1',tab:'home',selectedDate:'',weather:{temperature:'--',max:'--',min:'--',code:0},modal:null,editingId:null,flightLeg:'out',form:{},heroImage:'./kinrinko.webp'};
 },
 computed:{
 tripDays(){const out=[];const start=new Date(this.trip.startDate+'T00:00:00');for(let i=0;i<Math.max(1,Number(this.trip.days)||1);i++){const d=new Date(start);d.setDate(start.getDate()+i);const date=d.toISOString().slice(0,10);out.push({day:i+1,date,dateNumber:d.getDate(),month:d.getMonth()+1,week:['日','一','二','三','四','五','六'][d.getDay()]})}return out},
 currentSchedules(){return this.schedules.filter(x=>x.date===this.selectedDate).sort((a,b)=>a.time.localeCompare(b.time))},
 selectedDateLabel(){const d=this.tripDays.find(x=>x.date===this.selectedDate);return d?`DAY ${d.day} · ${d.month}/${d.dateNumber}（週${d.week}）`:''},
 totalExpense(){return this.expenses.reduce((s,x)=>s+Number(x.amount||0),0)},
-shareUrl(){return location.origin+location.pathname+'?view=1'+(this.firebaseInput?'&fb='+encodeURIComponent(this.firebaseInput):'')},
+shareUrl(){return location.origin+location.pathname+'?view=1'},
 modalTitle(){return{trip:'編輯旅行設定',schedule:this.editingId?'編輯行程':'新增行程',transport:this.editingId?'編輯交通':'新增交通',spot:this.editingId?'編輯景點':'新增景點',flight:'編輯機票資訊',hotel:'編輯飯店資訊',expense:'新增花費'}[this.modal]||''},
 weatherDescription(){const c=this.weather.code;if(c===0)return'晴朗';if([1,2,3].includes(c))return'多雲';if([45,48].includes(c))return'有霧';if([51,53,55,56,57].includes(c))return'細雨';if([61,63,65,66,67].includes(c))return'下雨';if([71,73,75,77].includes(c))return'降雪';if([80,81,82].includes(c))return'陣雨';if([95,96,99].includes(c))return'雷雨';return'天氣資訊'},
 weatherIcon(){const c=this.weather.code;if(c===0)return'☀️';if([1,2,3].includes(c))return'🌤️';if([45,48].includes(c))return'🌫️';if([51,53,55,56,57].includes(c))return'🌦️';if([61,63,65,66,67].includes(c))return'🌧️';if([71,73,75,77].includes(c))return'❄️';if([80,81,82].includes(c))return'🌦️';if([95,96,99].includes(c))return'⛈️';return'🌤️'}
 },
 watch:{selectedDate(){this.loadWeather()},'trip.startDate'(){this.ensureDate();this.save()},'trip.days'(){this.ensureDate();this.save()}},
-mounted(){this.ensureDate();this.loadWeather();if(this.firebaseInput)this.connectFirebase();if(this.isViewer)this.tab='home';if(this.isViewer){document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.closest('nav')&&!b.closest('.date-nav')){e.preventDefault();e.stopPropagation()}},true)}},
+mounted(){this.ensureDate();this.loadWeather();this.connectFirebase();if(this.isViewer)this.tab='home';},
+beforeUnmount(){if(this.cloudUnsubscribe)this.cloudUnsubscribe();if(this.autoSyncTimer)clearTimeout(this.autoSyncTimer)},
 methods:{
 routeUrl(){const pts=this.currentSchedules.filter(x=>x.location).map(x=>x.location);return pts.length>1?'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(pts[0])+'&destination='+encodeURIComponent(pts[pts.length-1])+'&waypoints='+encodeURIComponent(pts.slice(1,-1).join('|'))+'&travelmode=transit':this.mapsUrl(pts[0]||'福岡')},
 copyShare(){const u=this.shareUrl;if(navigator.clipboard)navigator.clipboard.writeText(u).then(()=>alert('已複製分享網址')).catch(()=>prompt('請複製分享網址',u));else prompt('請複製分享網址',u)},
-connectFirebase(){try{const config=JSON.parse(this.firebaseInput);if(!config.apiKey||!config.projectId||!config.appId)throw Error('設定缺少必要欄位');localStorage.setItem('fukuokaFirebaseConfig',JSON.stringify(config));if(!firebase.apps.length)firebase.initializeApp(config);this.firebaseReady=true;this.cloudStatus='已連接 Firebase；請登入 Google 管理員';firebase.auth().onAuthStateChanged(u=>{this.ownerUid=u?.uid||'';if(u)this.cloudStatus='管理員已登入';if(this.isViewer)this.loadCloud()});if(this.isViewer)this.loadCloud()}catch(e){this.cloudStatus='連接失敗：'+e.message}},
+connectFirebase(){try{const config=this.isViewer?PUBLIC_FIREBASE_CONFIG:JSON.parse(this.firebaseInput);if(!config.apiKey||!config.projectId||!config.appId)throw Error('設定缺少必要欄位');if(!this.isViewer)localStorage.setItem('fukuokaFirebaseConfig',JSON.stringify(config));if(!firebase.apps.length)firebase.initializeApp(config);this.firebaseReady=true;this.cloudStatus='已連接 Firebase';if(this.isViewer){this.listenCloud();return}firebase.auth().onAuthStateChanged(u=>{this.ownerUid=u?.uid||'';this.cloudStatus=u?'管理員已登入':'已連接 Firebase；請登入 Google 管理員'});}catch(e){this.cloudStatus='連接失敗：'+e.message}},
+listenCloud(){if(this.cloudUnsubscribe)this.cloudUnsubscribe();this.cloudStatus='正在同步公開行程…';this.cloudUnsubscribe=firebase.firestore().collection('publicTrips').doc('fukuoka').onSnapshot(snap=>{if(!snap.exists){this.cloudStatus='雲端尚無公開行程';return}const d=snap.data();this.isApplyingCloud=true;for(const k of ['trip','schedules','transports','spots','flight','hotel'])if(d[k]!==undefined)this[k]=d[k];this.ensureDate();this.isApplyingCloud=false;this.cloudStatus='已同步雲端行程 '+(d.updatedAt||'')},e=>{this.cloudStatus='同步失敗：'+e.message;console.error('Firestore listener:',e)})},
+scheduleAutoSync(){if(this.isViewer||this.isApplyingCloud||!this.firebaseReady||this.ownerUid!==ADMIN_UID)return;if(this.autoSyncTimer)clearTimeout(this.autoSyncTimer);this.autoSyncTimer=setTimeout(async()=>{try{await firebase.firestore().collection('publicTrips').doc('fukuoka').set(this.publicData());this.cloudStatus='已自動同步 '+new Date().toLocaleString()}catch(e){this.cloudStatus='自動同步失敗：'+e.message}},900)},
 async signInGoogle(){try{const provider=new firebase.auth.GoogleAuthProvider();const r=await firebase.auth().signInWithPopup(provider);this.ownerUid=r.user.uid;this.cloudStatus='管理員登入成功'}catch(e){this.cloudStatus='登入失敗：'+e.message+'（請確認 GitHub Pages 網域已加入 Firebase 授權網域）'}},
-publicData(){return {trip:this.trip,schedules:this.schedules,transports:this.transports,spots:this.spots,flight:{...this.flight,booking:''},hotel:{...this.hotel,booking:'',phone:''},updatedAt:new Date().toISOString()}},
-async publishCloud(){if(this.isViewer)return alert('唯讀模式無法上傳');if(!this.ownerUid)return alert('請先登入管理員');try{await firebase.firestore().collection('publicTrips').doc('fukuoka').set(this.publicData());this.cloudStatus='已成功上傳 '+new Date().toLocaleString();alert('雲端行程已更新 🌼')}catch(e){this.cloudStatus='上傳失敗：'+e.message}},
+publicData(){return {trip:this.trip,schedules:this.schedules,transports:this.transports,spots:this.spots,flight:{...this.flight,booking:'',returnBooking:''},hotel:{...this.hotel,booking:'',phone:''},updatedAt:new Date().toISOString()}},
+async publishCloud(){if(this.isViewer)return alert('唯讀模式無法上傳');if(this.ownerUid!==ADMIN_UID)return alert('只有指定管理員能上傳');try{await firebase.firestore().collection('publicTrips').doc('fukuoka').set(this.publicData());this.cloudStatus='已成功上傳 '+new Date().toLocaleString();alert('雲端行程已更新 🌼')}catch(e){this.cloudStatus='上傳失敗：'+e.message}},
 async loadCloud(){if(!this.firebaseReady)return;try{const snap=await firebase.firestore().collection('publicTrips').doc('fukuoka').get();if(!snap.exists){this.cloudStatus='雲端尚無公開行程';return}const d=snap.data();for(const k of ['trip','schedules','transports','spots','flight','hotel'])if(d[k]!==undefined)this[k]=d[k];this.ensureDate();this.cloudStatus='已讀取雲端行程 '+(d.updatedAt||'');if(!this.isViewer)this.save()}catch(e){this.cloudStatus='讀取失敗：'+e.message}},
 save(){
  try {
   localStorage.setItem(KEY,JSON.stringify({trip:this.trip,schedules:this.schedules,transports:this.transports,spots:this.spots,expenses:this.expenses,flight:this.flight,hotel:this.hotel}));
+  this.scheduleAutoSync();
   return true;
  } catch(e) {
   console.error('儲存旅行資料失敗：',e);
