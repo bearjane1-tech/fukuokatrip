@@ -111,7 +111,7 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 <div><div class="font-bold">{{item.title}}</div><div v-if="item.location" class="text-xs text-[#988873] mt-1">📍 {{item.location}}</div></div>
 <button @click="openScheduleModal(item)" class="text-[#ad9d83]">✎</button>
 </div>
-<div v-if="item.note" class="mt-3 bg-[#fbf4df] rounded-xl p-2.5 text-xs text-[#81745f]">💬 {{item.note}}</div>
+<div v-if="noteItems(item).length" class="mt-3 bg-[#fbf4df] rounded-xl p-2.5 text-xs text-[#81745f]"><div class="font-bold mb-1">📝 備註</div><div v-for="(n,i) in noteItems(item)" :key="i" class="py-1 whitespace-pre-wrap">{{i+1}}. {{n}}</div></div>
 <div class="mt-3 flex items-center justify-between bg-[#fff9e9] rounded-xl px-3 py-2">
 <span class="text-xs">{{weatherIcon}} 福岡 {{weather.temperature}}°C</span>
 <a v-if="item.location" :href="mapsUrl(item.location)" target="_blank" class="text-[10px] text-[#b38c32]">地圖 ↗</a>
@@ -134,7 +134,7 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 <div class="flex-1"><div class="flex justify-between"><div class="font-bold">{{item.title}}</div><button @click="openTransportModal(item)" class="text-[#ad9d83]">✎</button></div>
 <div class="text-xs text-[#8f806c] mt-1">{{item.route}}</div>
 <div v-if="item.time" class="text-xs text-[#a39379] mt-2">🕐 {{item.time}}</div>
-<div v-if="item.note" class="text-xs bg-[#fff8e5] rounded-xl p-2 mt-2">💬 {{item.note}}</div></div>
+<div v-if="noteItems(item).length" class="text-xs bg-[#fff8e5] rounded-xl p-3 mt-2"><div class="font-bold mb-1">📝 備註</div><div v-for="(n,i) in noteItems(item)" :key="i" class="py-1 whitespace-pre-wrap">{{i+1}}. {{n}}</div></div><div v-if="item.routeImage" class="mt-3"><a :href="item.routeImage" target="_blank" rel="noopener noreferrer" class="block"><img :src="item.routeImage" alt="交通路線圖" loading="lazy" class="w-full max-h-72 object-contain rounded-xl bg-white border border-[#eee1bd]"><span class="text-xs text-[#b38c32]">🔎 點擊放大路線圖 ↗</span></a></div></div>
 </div>
 <button @click="deleteTransport(item.id)" class="text-[10px] text-[#c6a69b] mt-2 float-right">刪除</button>
 <div class="clear-both"></div>
@@ -158,12 +158,12 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 <div class="card paper soft p-5 mb-4">
 <div class="flex justify-between items-center mb-3"><h3 class="font-extrabold text-lg">🛫 去程機票</h3><button @click="openFlightModal('out')" class="text-[#ad9d83]">✎ 編輯去程</button></div>
 <div v-if="!flight.outFlight && !flight.date && !flight.airline" class="text-sm text-[#9b8c78]">尚未輸入去程資料</div>
-<div v-else class="bg-[#fff8e5] rounded-2xl p-4"><div class="flex justify-between items-center"><div class="text-xl font-extrabold">{{flight.from||'TPE'}}</div><div>✈️ →</div><div class="text-xl font-extrabold">{{flight.to||'FUK'}}</div></div><div class="text-sm mt-3">📅 {{flight.date||'日期未設定'}}　🕐 {{flight.outTime||'時間未設定'}}</div><div class="text-sm mt-2">{{flight.airline||'航空公司未設定'}} · {{flight.outFlight||'航班未設定'}}</div><div v-if="flight.booking" class="text-xs mt-2">訂位代號：{{flight.booking}}</div><div v-if="flight.outNote" class="text-xs mt-2">💬 {{flight.outNote}}</div></div>
+<div v-else class="bg-[#fff8e5] rounded-2xl p-4"><div class="flex justify-between items-center"><div class="text-xl font-extrabold">{{flight.from||'TPE'}}</div><div>✈️ →</div><div class="text-xl font-extrabold">{{flight.to||'FUK'}}</div></div><div class="text-sm mt-3">📅 {{flight.date||'日期未設定'}}　🕐 出發 {{flight.outTime||'未設定'}} → 抵達 {{flight.arrivalTime||'未設定'}}</div><div class="text-sm mt-2">{{flight.airline||'航空公司未設定'}} · {{flight.outFlight||'航班未設定'}}</div><div v-if="flight.booking" class="text-xs mt-2">訂位代號：{{flight.booking}}</div><div v-if="flight.outNote" class="text-xs mt-2">💬 {{flight.outNote}}</div></div>
 </div>
 <div class="card paper soft p-5 mb-4">
 <div class="flex justify-between items-center mb-3"><h3 class="font-extrabold text-lg">🛬 回程機票</h3><button @click="openFlightModal('return')" class="text-[#ad9d83]">✎ 編輯回程</button></div>
 <div v-if="!flight.returnFlight && !flight.returnDate && !flight.returnAirline" class="text-sm text-[#9b8c78]">尚未輸入回程資料</div>
-<div v-else class="bg-[#fff8e5] rounded-2xl p-4"><div class="flex justify-between items-center"><div class="text-xl font-extrabold">{{flight.returnFrom||'FUK'}}</div><div>✈️ →</div><div class="text-xl font-extrabold">{{flight.returnTo||'TPE'}}</div></div><div class="text-sm mt-3">📅 {{flight.returnDate||'日期未設定'}}　🕐 {{flight.returnTime||'時間未設定'}}</div><div class="text-sm mt-2">{{flight.returnAirline||flight.airline||'航空公司未設定'}} · {{flight.returnFlight||'航班未設定'}}</div><div v-if="flight.returnBooking||flight.booking" class="text-xs mt-2">訂位代號：{{flight.returnBooking||flight.booking}}</div><div v-if="flight.returnNote" class="text-xs mt-2">💬 {{flight.returnNote}}</div></div>
+<div v-else class="bg-[#fff8e5] rounded-2xl p-4"><div class="flex justify-between items-center"><div class="text-xl font-extrabold">{{flight.returnFrom||'FUK'}}</div><div>✈️ →</div><div class="text-xl font-extrabold">{{flight.returnTo||'TPE'}}</div></div><div class="text-sm mt-3">📅 {{flight.returnDate||'日期未設定'}}　🕐 出發 {{flight.returnTime||'未設定'}} → 抵達 {{flight.returnArrivalTime||'未設定'}}</div><div class="text-sm mt-2">{{flight.returnAirline||flight.airline||'航空公司未設定'}} · {{flight.returnFlight||'航班未設定'}}</div><div v-if="flight.returnBooking||flight.booking" class="text-xs mt-2">訂位代號：{{flight.returnBooking||flight.booking}}</div><div v-if="flight.returnNote" class="text-xs mt-2">💬 {{flight.returnNote}}</div></div>
 </div>
 
 </section>
@@ -209,7 +209,7 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 <label class="text-xs text-[#968872]">行程名稱<input v-model="form.title" class="field" placeholder="例如：櫛田神社"></label>
 <label class="text-xs text-[#968872]">地點<input v-model="form.location" class="field" placeholder="例如：福岡市博多區"></label>
 <label class="text-xs text-[#968872]">交通<select v-model="form.transport" class="field"><option>步行</option><option>電車</option><option>地鐵</option><option>巴士</option><option>計程車</option><option>租車</option></select></label>
-<label class="text-xs text-[#968872]">備註<textarea v-model="form.note" rows="3" class="field resize-none"></textarea></label>
+<div class="text-xs font-bold text-[#968872]">📝 備註（可分別新增、刪除）</div><div v-for="(n,i) in form.notes" :key="i" class="flex items-start gap-2"><textarea v-model="form.notes[i]" rows="2" class="field flex-1 resize-none" :placeholder="'第 '+(i+1)+' 筆備註'"></textarea><button type="button" @click="form.notes.splice(i,1)" class="mt-3 bg-[#fff0e8] text-[#b36c57] px-3 py-2 rounded-xl">刪除</button></div><button type="button" @click="form.notes.push('')" class="w-full border-2 border-dashed border-[#decfae] rounded-xl py-3 text-sm">＋ 新增備註</button>
 <button @click="saveSchedule" class="save">儲存行程 🌼</button>
 </div>
 
@@ -218,8 +218,8 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 <label class="text-xs text-[#968872]">名稱<input v-model="form.title" class="field" placeholder="例如：JR 特急由布院之森"></label>
 <label class="text-xs text-[#968872]">路線／起訖<input v-model="form.route" class="field" placeholder="博多 → 由布院"></label>
 <label class="text-xs text-[#968872]">時間<input v-model="form.time" class="field" placeholder="09:17 → 11:31"></label>
-<label class="text-xs text-[#968872]">交通圖示<input v-model="form.icon" class="field" placeholder="🚃"></label>
-<label class="text-xs text-[#968872]">備註<textarea v-model="form.note" rows="3" class="field resize-none"></textarea></label>
+<label class="text-xs text-[#968872]">交通圖示<input v-model="form.icon" class="field" placeholder="🚃"></label><label class="text-xs text-[#968872]">🗺️ 路線圖圖片網址<input v-model="form.routeImageUrl" class="field" placeholder="https://...jpg / png / webp"></label><label class="text-xs text-[#968872]">或從手機上傳路線圖<input type="file" accept="image/*" class="field" @change="onRouteImageSelected"></label><div v-if="form.routeImage || form.routeImageUrl" class="text-xs"><img :src="form.routeImageUrl || form.routeImage" class="max-h-52 w-full object-contain rounded-xl bg-white" alt="路線圖預覽"><button type="button" @click="form.routeImage='';form.routeImageUrl=''" class="text-[#b36c57] mt-2">移除路線圖</button></div><p class="text-xs text-[#a39379]">手機圖片會自動縮小後隨行程同步；圖片過大時請改用網址。</p>
+<div class="text-xs font-bold text-[#968872]">📝 備註（可分別新增、刪除）</div><div v-for="(n,i) in form.notes" :key="i" class="flex items-start gap-2"><textarea v-model="form.notes[i]" rows="2" class="field flex-1 resize-none" :placeholder="'第 '+(i+1)+' 筆備註'"></textarea><button type="button" @click="form.notes.splice(i,1)" class="mt-3 bg-[#fff0e8] text-[#b36c57] px-3 py-2 rounded-xl">刪除</button></div><button type="button" @click="form.notes.push('')" class="w-full border-2 border-dashed border-[#decfae] rounded-xl py-3 text-sm">＋ 新增備註</button>
 <button @click="saveTransport" class="save">儲存交通資訊 🚃</button>
 </div>
 
@@ -238,7 +238,7 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 <label class="text-xs text-[#968872]">航空公司<input v-model="form.airline" class="field" placeholder="例如：長榮航空"></label>
 <div class="grid grid-cols-2 gap-3"><label class="text-xs text-[#968872]">搭乘日期<input v-model="form.date" type="date" class="field"></label><label class="text-xs text-[#968872]">航班編號<input v-model="form.flightNumber" class="field" placeholder="例如 BR106"></label></div>
 <div class="grid grid-cols-2 gap-3"><label class="text-xs text-[#968872]">出發機場<input v-model="form.from" class="field" placeholder="TPE"></label><label class="text-xs text-[#968872]">抵達機場<input v-model="form.to" class="field" placeholder="FUK"></label></div>
-<label class="text-xs text-[#968872]">出發時間<input v-model="form.time" type="time" class="field"></label>
+<div class="grid grid-cols-2 gap-3"><label class="text-xs text-[#968872]">出發時間<input v-model="form.time" type="time" class="field"></label><label class="text-xs text-[#968872]">抵達時間<input v-model="form.arrivalTime" type="time" class="field"></label></div>
 <label class="text-xs text-[#968872]">訂位代號<input v-model="form.booking" class="field"></label>
 <label class="text-xs text-[#968872]">備註<textarea v-model="form.note" rows="3" class="field"></textarea></label>
 <button @click="saveFlight" class="save">{{flightLeg==='return'?'儲存回程機票 🛬':'儲存去程機票 🛫'}}</button>
@@ -252,7 +252,7 @@ class="flex-shrink-0 w-[68px] h-[78px] rounded-[20px] cute-btn"
 <label class="text-xs text-[#968872]">電話<input v-model="form.phone" class="field"></label>
 <label class="text-xs text-[#968872]">訂房編號<input v-model="form.booking" class="field"></label>
 <label class="text-xs text-[#968872]">房型<input v-model="form.room" class="field" placeholder="雙人房"></label>
-<label class="text-xs text-[#968872]">備註<textarea v-model="form.note" rows="3" class="field resize-none"></textarea></label>
+<div class="text-xs font-bold text-[#968872]">📝 備註（可分別新增、刪除）</div><div v-for="(n,i) in form.notes" :key="i" class="flex items-start gap-2"><textarea v-model="form.notes[i]" rows="2" class="field flex-1 resize-none" :placeholder="'第 '+(i+1)+' 筆備註'"></textarea><button type="button" @click="form.notes.splice(i,1)" class="mt-3 bg-[#fff0e8] text-[#b36c57] px-3 py-2 rounded-xl">刪除</button></div><button type="button" @click="form.notes.push('')" class="w-full border-2 border-dashed border-[#decfae] rounded-xl py-3 text-sm">＋ 新增備註</button>
 <button @click="saveHotel" class="save">儲存飯店 🏨</button>
 </div>
 
@@ -314,6 +314,8 @@ watch:{selectedDate(){this.loadWeather()},'trip.startDate'(){this.ensureDate();t
 mounted(){this.ensureDate();this.loadWeather();this.connectFirebase();if(this.isViewer)this.tab='home';},
 beforeUnmount(){if(this.cloudUnsubscribe)this.cloudUnsubscribe();if(this.autoSyncTimer)clearTimeout(this.autoSyncTimer)},
 methods:{
+noteItems(item){return Array.isArray(item.notes)?item.notes.filter(x=>typeof x==='string'&&x.trim()):item.note?[item.note]:[]},
+async onRouteImageSelected(e){const file=e.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/'))return alert('請選擇圖片');try{const url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});const img=await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src=url});const scale=Math.min(1,900/img.width,900/img.height);const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const compressed=canvas.toDataURL('image/jpeg',0.68);if(compressed.length>230000)throw Error('圖片仍然太大，請改用圖片網址');this.form.routeImage=compressed;this.form.routeImageUrl='';}catch(err){alert('路線圖處理失敗：'+err.message)}finally{e.target.value=''}},
 routeUrl(){const pts=this.currentSchedules.filter(x=>x.location).map(x=>x.location);return pts.length>1?'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(pts[0])+'&destination='+encodeURIComponent(pts[pts.length-1])+'&waypoints='+encodeURIComponent(pts.slice(1,-1).join('|'))+'&travelmode=transit':this.mapsUrl(pts[0]||'福岡')},
 copyShare(){const u=this.shareUrl;if(navigator.clipboard)navigator.clipboard.writeText(u).then(()=>alert('已複製分享網址')).catch(()=>prompt('請複製分享網址',u));else prompt('請複製分享網址',u)},
 connectFirebase(){try{const config=this.isViewer?PUBLIC_FIREBASE_CONFIG:JSON.parse(this.firebaseInput);if(!config.apiKey||!config.projectId||!config.appId)throw Error('設定缺少必要欄位');if(!this.isViewer)localStorage.setItem('fukuokaFirebaseConfig',JSON.stringify(config));if(!firebase.apps.length)firebase.initializeApp(config);this.firebaseReady=true;this.cloudStatus='已連接 Firebase';if(this.isViewer){this.listenCloud();return}firebase.auth().onAuthStateChanged(u=>{this.ownerUid=u?.uid||'';this.cloudStatus=u?'管理員已登入':'已連接 Firebase；請登入 Google 管理員'});}catch(e){this.cloudStatus='連接失敗：'+e.message}},
@@ -356,17 +358,17 @@ saveTrip(){
  this.closeModal();
  alert('旅行設定已儲存 🌼');
 },
-openScheduleModal(item=null){this.editingId=item?.id||null;this.form=item?{...item}:{time:'09:00',title:'',location:'',transport:'電車',note:''};this.modal='schedule'},
-saveSchedule(){if(!this.form.title?.trim())return alert('請輸入行程名稱');if(this.editingId){const i=this.schedules.findIndex(x=>x.id===this.editingId);this.schedules[i]={...this.schedules[i],...this.form}}else this.schedules.push({id:Date.now(),date:this.selectedDate,...this.form});this.save();this.closeModal()},
+openScheduleModal(item=null){this.editingId=item?.id||null;this.form=item?{...item,notes:this.noteItems(item)}:{time:'09:00',title:'',location:'',transport:'電車',notes:[]};this.modal='schedule'},
+saveSchedule(){if(!this.form.title?.trim())return alert('請輸入行程名稱');this.form.notes=(this.form.notes||[]).map(x=>x.trim()).filter(Boolean);this.form.note='';if(this.editingId){const i=this.schedules.findIndex(x=>x.id===this.editingId);this.schedules[i]={...this.schedules[i],...this.form}}else this.schedules.push({id:Date.now(),date:this.selectedDate,...this.form});this.save();this.closeModal()},
 deleteSchedule(id){if(confirm('確定要刪除這個行程嗎？')){this.schedules=this.schedules.filter(x=>x.id!==id);this.save()}},
-openTransportModal(item=null){this.editingId=item?.id||null;this.form=item?{...item}:{title:'',route:'',time:'',icon:'🚃',note:''};this.modal='transport'},
-saveTransport(){if(!this.form.title?.trim())return alert('請輸入交通名稱');if(this.editingId){const i=this.transports.findIndex(x=>x.id===this.editingId);this.transports[i]={...this.transports[i],...this.form}}else this.transports.push({id:Date.now(),...this.form});this.save();this.closeModal()},
+openTransportModal(item=null){this.editingId=item?.id||null;this.form=item?{...item,notes:this.noteItems(item),routeImageUrl:(item.routeImage&&item.routeImage.startsWith('data:'))?'':(item.routeImage||'')}:{title:'',route:'',time:'',icon:'🚃',notes:[],routeImage:'',routeImageUrl:''};this.modal='transport'},
+saveTransport(){if(!this.form.title?.trim())return alert('請輸入交通名稱');this.form.notes=(this.form.notes||[]).map(x=>x.trim()).filter(Boolean);this.form.note='';this.form.routeImage=(this.form.routeImageUrl||'').trim()||this.form.routeImage||'';delete this.form.routeImageUrl;if(this.editingId){const i=this.transports.findIndex(x=>x.id===this.editingId);this.transports[i]={...this.transports[i],...this.form}}else this.transports.push({id:Date.now(),...this.form});this.save();this.closeModal()},
 deleteTransport(id){if(confirm('確定刪除這筆交通資訊嗎？')){this.transports=this.transports.filter(x=>x.id!==id);this.save()}},
 openSpotModal(item=null){this.editingId=item?.id||null;this.form=item?{...item}:{name:'',area:'',icon:'⭐',description:''};this.modal='spot'},
 saveSpot(){if(!this.form.name?.trim())return alert('請輸入景點名稱');if(this.editingId){const i=this.spots.findIndex(x=>x.id===this.editingId);this.spots[i]={...this.spots[i],...this.form}}else this.spots.push({id:Date.now(),...this.form});this.save();this.closeModal()},
 deleteSpot(id){if(confirm('確定刪除這個景點嗎？')){this.spots=this.spots.filter(x=>x.id!==id);this.save()}},
-openFlightModal(leg='out'){this.flightLeg=leg;const f=this.flight;this.form=leg==='return'?{airline:f.returnAirline||f.airline||'',date:f.returnDate||'',flightNumber:f.returnFlight||'',from:f.returnFrom||'FUK',to:f.returnTo||'TPE',time:f.returnTime||'',booking:f.returnBooking||f.booking||'',note:f.returnNote||''}:{airline:f.airline||'',date:f.date||'',flightNumber:f.outFlight||'',from:f.from||'TPE',to:f.to||'FUK',time:f.outTime||'',booking:f.booking||'',note:f.outNote||''};this.modal='flight'},
-saveFlight(){const f=this.form;if(this.flightLeg==='return'){Object.assign(this.flight,{returnAirline:f.airline,returnDate:f.date,returnFlight:f.flightNumber,returnFrom:f.from,returnTo:f.to,returnTime:f.time,returnBooking:f.booking,returnNote:f.note})}else{Object.assign(this.flight,{airline:f.airline,date:f.date,outFlight:f.flightNumber,from:f.from,to:f.to,outTime:f.time,booking:f.booking,outNote:f.note})}this.save();this.closeModal()},
+openFlightModal(leg='out'){this.flightLeg=leg;const f=this.flight;this.form=leg==='return'?{airline:f.returnAirline||f.airline||'',date:f.returnDate||'',flightNumber:f.returnFlight||'',from:f.returnFrom||'FUK',to:f.returnTo||'TPE',time:f.returnTime||'',arrivalTime:f.returnArrivalTime||'',booking:f.returnBooking||f.booking||'',note:f.returnNote||''}:{airline:f.airline||'',date:f.date||'',flightNumber:f.outFlight||'',from:f.from||'TPE',to:f.to||'FUK',time:f.outTime||'',arrivalTime:f.arrivalTime||'',booking:f.booking||'',note:f.outNote||''};this.modal='flight'},
+saveFlight(){const f=this.form;if(this.flightLeg==='return'){Object.assign(this.flight,{returnAirline:f.airline,returnDate:f.date,returnFlight:f.flightNumber,returnFrom:f.from,returnTo:f.to,returnTime:f.time,returnArrivalTime:f.arrivalTime,returnBooking:f.booking,returnNote:f.note})}else{Object.assign(this.flight,{airline:f.airline,date:f.date,outFlight:f.flightNumber,from:f.from,to:f.to,outTime:f.time,arrivalTime:f.arrivalTime,booking:f.booking,outNote:f.note})}this.save();this.closeModal()},
 openHotelModal(){this.form={...this.hotel};this.modal='hotel'},
 saveHotel(){this.hotel={...this.form};this.save();this.closeModal()},
 openExpenseModal(){this.editingId=null;this.form={title:'',amount:0,category:'餐飲'};this.modal='expense'},
